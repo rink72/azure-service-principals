@@ -5,9 +5,6 @@ inputs:
   client_id:
     description: 'Azure Service Principal Client ID'
     required: true
-  subscription_id:
-    description: 'Azure Subscription ID'
-    required: true
   tenant_id:
     description: 'Azure Tenant ID'
     required: true
@@ -18,22 +15,22 @@ inputs:
     description: 'Terraform action to run'
     required: true
     allowed_values: ['plan', 'apply', 'destroy']
-  stateSubscriptionId:
+  state_subscription_id:
     description: 'Azure Subscription ID for Terraform state'
     required: true
-  stateResourceGroup:
+  state_resource_group:
     description: 'Azure Resource Group for Terraform state'
     required: true
-  stateStorageAccount:
+  state_storage_account:
     description: 'Azure Storage Account for Terraform state'
     required: true
-  stateContainer:
+  state_container:
     description: 'Azure Storage Container for Terraform state'
     required: true
-  stateKey:
+  state_key:
     description: 'Azure Storage Key for Terraform state'
     required: true
-  terraformVersion:
+  terraform_version:
     description: 'Terraform version to use'
     required: false
     default: 1.7.5
@@ -45,28 +42,28 @@ runs:
   - name: Terraform install
     uses: hashicorp/setup-terraform@v3
     with:
-      terraform_version: ${{ inputs.terraformVersion }}
+      terraform_version: ${{ inputs.terraform_version }}
 
   - name: Az CLI login
     uses: azure/login@v1
     with:
-      client_id: ${{ inputs.client_id }}
-      subscription_id: ${{ inputs.subscription_id }}
-      tenant_id: ${{ inputs.tenant_id }}
+      client-id: ${{ inputs.client_id }}
+      subscription-id: ${{ inputs.state_subscription_id }}
+      tenant-id: ${{ inputs.tenant_id }}
 
   - name: Terraform init
     run: |
       terraform init \
-        -backend-config="subscription_id=${{ inputs.stateSubscriptionId }}" \
-        -backend-config="resource_group_name=${{ inputs.stateResourceGroup }}" \
-        -backend-config="storage_account_name=${{ inputs.stateStorageAccount }}" \
-        -backend-config="container_name=${{ inputs.stateContainer }}" \
-        -backend-config="key=${{ inputs.stateKey }}"
+        -backend-config="subscription_id=${{ inputs.state_subscription_id }}" \
+        -backend-config="resource_group_name=${{ inputs.state_resource_group }}" \
+        -backend-config="storage_account_name=${{ inputs.state_storage_account }}" \
+        -backend-config="container_name=${{ inputs.state_container }}" \
+        -backend-config="key=${{ inputs.state_key }}"
     working-directory: ${{ inputs.path }}
     shell: bash
     env:
       ARM_CLIENT_ID: ${{ inputs.client_id }}
-      ARM_SUBSCRIPTION_ID: ${{ inputs.subscription_id }}
+      ARM_SUBSCRIPTION_ID: ${{ inputs.state_subscription_id }}
       ARM_TENANT_ID: ${{ inputs.tenant_id }}
       ARM_USE_OIDC: true
       TF_IN_AUTOMATION: true
@@ -78,7 +75,7 @@ runs:
     shell: bash
     env:
       ARM_CLIENT_ID: ${{ inputs.client_id }}
-      ARM_SUBSCRIPTION_ID: ${{ inputs.subscription_id }}
+      ARM_SUBSCRIPTION_ID: ${{ inputs.state_subscription_id }}
       ARM_TENANT_ID: ${{ inputs.tenant_id }}
       ARM_USE_OIDC: true
       TF_IN_AUTOMATION: true

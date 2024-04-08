@@ -25,6 +25,7 @@ jobs:
         uses: ./.github/actions/azure-terraform-action
         with:
           action: plan
+          path: infrastructure
           client_id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant_id: ${{ secrets.AZURE_TENANT_ID }}
           state_subscription_id: ${{ secrets.STATE_SUBSCRIPTION_ID }}
