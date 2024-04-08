@@ -1,0 +1,86 @@
+name: Run Azure Terraform
+description: Run Terraform on Azure
+
+inputs:
+  client_id:
+    description: 'Azure Service Principal Client ID'
+    required: true
+  subscription_id:
+    description: 'Azure Subscription ID'
+    required: true
+  tenant_id:
+    description: 'Azure Tenant ID'
+    required: true
+  path:
+    description: 'Path to Terraform configuration'
+    required: true
+  action:
+    description: 'Terraform action to run'
+    required: true
+    allowed_values: ['plan', 'apply', 'destroy']
+  stateSubscriptionId:
+    description: 'Azure Subscription ID for Terraform state'
+    required: true
+  stateResourceGroup:
+    description: 'Azure Resource Group for Terraform state'
+    required: true
+  stateStorageAccount:
+    description: 'Azure Storage Account for Terraform state'
+    required: true
+  stateContainer:
+    description: 'Azure Storage Container for Terraform state'
+    required: true
+  stateKey:
+    description: 'Azure Storage Key for Terraform state'
+    required: true
+  terraformVersion:
+    description: 'Terraform version to use'
+    required: false
+    default: 1.7.5
+  
+runs:
+  using: composite
+  steps:
+
+  - name: Terraform install
+    uses: hashicorp/setup-terraform@v3
+    with:
+      terraform_version: ${{ inputs.terraformVersion }}
+
+  - name: Az CLI login
+    uses: azure/login@v1
+    with:
+      client_id: ${{ inputs.client_id }}
+      subscription_id: ${{ inputs.subscription_id }}
+      tenant_id: ${{ inputs.tenant_id }}
+
+  - name: Terraform init
+    run: |
+      terraform init \
+        -backend-config="subscription_id=${{ inputs.stateSubscriptionId }}" \
+        -backend-config="resource_group_name=${{ inputs.stateResourceGroup }}" \
+        -backend-config="storage_account_name=${{ inputs.stateStorageAccount }}" \
+        -backend-config="container_name=${{ inputs.stateContainer }}" \
+        -backend-config="key=${{ inputs.stateKey }}"
+    working-directory: ${{ inputs.path }}
+    shell: bash
+    env:
+      ARM_CLIENT_ID: ${{ inputs.client_id }}
+      ARM_SUBSCRIPTION_ID: ${{ inputs.subscription_id }}
+      ARM_TENANT_ID: ${{ inputs.tenant_id }}
+      ARM_USE_OIDC: true
+      TF_IN_AUTOMATION: true
+
+  - name: Terraform ${{ inputs.action }}
+    run: |
+      terraform ${{ inputs.action }}
+    working-directory: ${{ inputs.path }}
+    shell: bash
+    env:
+      ARM_CLIENT_ID: ${{ inputs.client_id }}
+      ARM_SUBSCRIPTION_ID: ${{ inputs.subscription_id }}
+      ARM_TENANT_ID: ${{ inputs.tenant_id }}
+      ARM_USE_OIDC: true
+      TF_IN_AUTOMATION: true
+      TF_CLI_ARGS_apply: -auto-approve
+      TF_CLI_ARGS_destroy: -auto-approve
